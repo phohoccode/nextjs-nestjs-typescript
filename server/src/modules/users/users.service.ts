@@ -5,15 +5,16 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
 import { hashPasswordHelper } from '@/helpers/util';
+import aqp from 'api-query-params';
 
 @Injectable()
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
-  isEmailExist = async (email: string) => {
+  async isEmailExist(email: string) {
     const user = await this.userModel.exists({ email });
     return user ? true : false;
-  };
+  }
 
   async create(createUserDto: CreateUserDto) {
     const { name, email, password, phone, address, image } = createUserDto;
@@ -37,14 +38,37 @@ export class UsersService {
     return {
       _id: user._id,
     };
-
-    console.log('>>> check hashpassword', hashPassword);
-
-    return 'This action adds a new user';
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll(query: string, current: number = 1, pageSize: number = 10) {
+    const { filter, sort } = aqp(query);
+
+    if (filter.current) delete filter.current;
+    if (filter.pageSize) delete filter.pageSize;
+
+    console.group(">>> check query params");
+    console.log('>>> check filter: ', filter);
+    console.log('>>> check sort: ', sort);
+    console.log(">>> check current", current);
+    console.log(">>> check pageSize", pageSize);
+
+    const totalItems = (await this.userModel.find(filter)).length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const skip = (current - 1) * pageSize;
+
+    console.log('>>> check totalItems: ', totalItems);
+    console.log('>>> check totalPages: ', totalPages);
+    console.log('>>> check skip: ', skip);
+    console.groupEnd();
+
+    const results = await this.userModel
+      .find(filter)
+      .limit(pageSize)
+      .skip(skip)
+      .select('-password')
+      .sort(sort as any);
+
+    return { results, totalPages };
   }
 
   findOne(id: number) {

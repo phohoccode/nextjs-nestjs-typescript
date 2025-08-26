@@ -13,6 +13,7 @@ import { OrderDetailModule } from '@/modules/order.detail/order.detail.module';
 import { OrdersModule } from '@/modules/orders/orders.module';
 import { RestaurantsModule } from '@/modules/restaurants/restaurants.module';
 import { ReviewsModule } from '@/modules/reviews/reviews.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ReviewsModule } from '@/modules/reviews/reviews.module';
       }),
       inject: [ConfigService],
     }),
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
