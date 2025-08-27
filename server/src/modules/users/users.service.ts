@@ -3,7 +3,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { hashPasswordHelper } from '@/helpers/util';
 import aqp from 'api-query-params';
 
@@ -46,11 +46,11 @@ export class UsersService {
     if (filter.current) delete filter.current;
     if (filter.pageSize) delete filter.pageSize;
 
-    console.group(">>> check query params");
+    console.group('>>> check query params');
     console.log('>>> check filter: ', filter);
     console.log('>>> check sort: ', sort);
-    console.log(">>> check current", current);
-    console.log(">>> check pageSize", pageSize);
+    console.log('>>> check current', current);
+    console.log('>>> check pageSize', pageSize);
 
     const totalItems = (await this.userModel.find(filter)).length;
     const totalPages = Math.ceil(totalItems / pageSize);
@@ -75,11 +75,22 @@ export class UsersService {
     return `This action returns a #${id} user`;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(updateUserDto: UpdateUserDto) {
+    return await this.userModel.updateOne(
+      { _id: updateUserDto._id },
+      { ...updateUserDto },
+    );
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    if (!mongoose.isValidObjectId(id)) {
+      throw new BadRequestException('Invalid user ID');
+    } else {
+      return await this.userModel.deleteOne({ _id: id });
+    }
+  }
+
+  async findByEmail(email: string) {
+    return await this.userModel.findOne({ email });
   }
 }
